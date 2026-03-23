@@ -107,6 +107,12 @@ sudo apt-get install -y build-essential libwebkit2gtk-4.1-dev libssl-dev
 
 **Port conflict** — If any of the ports (2024, 2026, 3000, 8001) are in use, stop existing services with `make stop` from the project root.
 
+**Chinese text or emoji not rendering correctly on Linux** — The WebView relies on system fonts. Install the required CJK and emoji fonts:
+```bash
+sudo apt-get install -y fonts-noto-cjk
+sudo apt-get install -y fonts-noto-color-emoji fonts-symbola
+```
+
 ## Acknowledgements
 
 This desktop wrapper is built on top of [DeerFlow](https://github.com/bytedance/deer-flow) by [ByteDance](https://github.com/bytedance), an open-source super agent harness licensed under MIT. All core agent logic, frontend, and backend code belong to the DeerFlow project and its contributors.
