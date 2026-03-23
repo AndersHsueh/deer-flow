@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Asuka",
   "version": "0.1.0",
-  "identifier": "com.deerflow.app",
+  "identifier": "com.deerflow.desktop",
   "build": {
     "frontendDist": "../src",
     "devUrl": "http://localhost:2026/workspace",
