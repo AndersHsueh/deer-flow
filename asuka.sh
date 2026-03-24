@@ -52,6 +52,11 @@ SVC_LG_NAME="LangGraph"
 SVC_LG_PORT="2024"
 SVC_LG_PATTERN="langgraph dev"
 
+# NG: Nginx reverse proxy
+SVC_NG_NAME="Nginx"
+SVC_NG_PORT="2026"
+SVC_NG_PATTERN="nginx"
+
 # ── 帮助信息 ─────────────────────────────────────────────────────────────────
 
 show_help() {
@@ -68,10 +73,12 @@ show_help() {
     echo "  ./asuka.sh --start:FE        启动前端 (Next.js)"
     echo "  ./asuka.sh --start:BE        启动后端 (Gateway)"
     echo "  ./asuka.sh --start:LG        启动 LangGraph"
+    echo "  ./asuka.sh --start:NG        启动 Nginx 反向代理"
     echo ""
     echo "  ./asuka.sh --stop:FE         停止前端"
     echo "  ./asuka.sh --stop:BE         停止后端"
     echo "  ./asuka.sh --stop:LG         停止 LangGraph"
+    echo "  ./asuka.sh --stop:NG         停止 Nginx"
     echo ""
     echo -e "${YELLOW}━━━ 其他 ━━━${NC}"
     echo "  ./asuka.sh --help            显示帮助"
@@ -80,11 +87,13 @@ show_help() {
     echo "  FE (Frontend):  localhost:3000"
     echo "  BE (Backend):   localhost:8001"
     echo "  LG (LangGraph): localhost:2024"
+    echo "  NG (Nginx):     localhost:2026"
     echo ""
     echo -e "${YELLOW}━━━ 日志位置 ━━━${NC}"
     echo "  $LOGS_DIR/frontend.log"
     echo "  $LOGS_DIR/gateway.log"
     echo "  $LOGS_DIR/langgraph.log"
+    echo "  $LOGS_DIR/nginx.log"
     echo ""
 }
 
@@ -270,6 +279,32 @@ start_langgraph() {
     wait_for_port "$SVC_LG_NAME" "$SVC_LG_PORT" 60
 }
 
+start_nginx() {
+    if is_running "$SVC_NG_PATTERN"; then
+        log_warn "$SVC_NG_NAME 已在运行"
+        return 0
+    fi
+
+    if check_port "$SVC_NG_PORT"; then
+        log_error "端口 $SVC_NG_PORT 已被占用，无法启动 $SVC_NG_NAME"
+        return 1
+    fi
+
+    log_info "启动 $SVC_NG_NAME..."
+    local nginx_conf="$REPO_ROOT/docker/nginx/nginx.local.conf"
+
+    if [ ! -f "$nginx_conf" ]; then
+        log_error "Nginx 配置文件不存在: $nginx_conf"
+        return 1
+    fi
+
+    nohup nginx -g "daemon off;" -c "$nginx_conf" -p "$REPO_ROOT" \
+        > "$LOGS_DIR/nginx.log" 2>&1 &
+    local pid=$!
+    save_pid "NG" "$pid"
+    wait_for_port "$SVC_NG_NAME" "$SVC_NG_PORT" 10
+}
+
 # ── 全部服务操作 ─────────────────────────────────────────────────────────────
 
 start_all() {
@@ -285,13 +320,17 @@ start_all() {
     start_frontend
     echo ""
 
+    start_nginx
+    echo ""
+
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${GREEN}  ✓ 所有服务已启动${NC}"
     echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo ""
-    echo "  🌐 Frontend:  http://localhost:3000"
-    echo "  📡 Backend:   http://localhost:8001"
-    echo "  🤖 LangGraph: http://localhost:2024"
+    echo "  🌐 Frontend:   http://localhost:3000"
+    echo "  📡 Backend:    http://localhost:8001"
+    echo "  🤖 LangGraph:  http://localhost:2024"
+    echo "  🌍 Nginx:      http://localhost:2026 (统一入口)"
     echo ""
 }
 
@@ -302,6 +341,7 @@ stop_all() {
     stop_service "FE" "$SVC_FE_NAME" "$SVC_FE_PATTERN" "$SVC_FE_PORT"
     stop_service "BE" "$SVC_BE_NAME" "$SVC_BE_PATTERN" "$SVC_BE_PORT"
     stop_service "LG" "$SVC_LG_NAME" "$SVC_LG_PATTERN" "$SVC_LG_PORT"
+    stop_service "NG" "$SVC_NG_NAME" "$SVC_NG_PATTERN" "$SVC_NG_PORT"
 
     echo ""
     log_info "✓ 所有服务已停止"
@@ -342,6 +382,9 @@ parse_command() {
         --start:LG)
             start_langgraph
             ;;
+        --start:NG)
+            start_nginx
+            ;;
         --stop:FE)
             stop_service "FE" "$SVC_FE_NAME" "$SVC_FE_PATTERN" "$SVC_FE_PORT"
             ;;
@@ -350,6 +393,9 @@ parse_command() {
             ;;
         --stop:LG)
             stop_service "LG" "$SVC_LG_NAME" "$SVC_LG_PATTERN" "$SVC_LG_PORT"
+            ;;
+        --stop:NG)
+            stop_service "NG" "$SVC_NG_NAME" "$SVC_NG_PATTERN" "$SVC_NG_PORT"
             ;;
         *)
             log_error "未知命令: $cmd"
