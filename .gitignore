@@ -1,3 +1,5 @@
+corporate-ai-team/
+
 # DeerFlow docker image cache
 docker/.cache/
 # OS generated files
@@ -52,3 +54,6 @@ web/
 # Deployment artifacts
 backend/Dockerfile.langgraph
 config.yaml.bak
+
+# asuka.sh service manager
+.asuka_pids/
