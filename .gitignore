@@ -2,6 +2,8 @@ corporate-ai-team/
 
 # DeerFlow docker image cache
 docker/.cache/
+# oh-my-claudecode state
+.omc/
 # OS generated files
 .DS_Store
 *.local
