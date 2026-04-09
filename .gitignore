@@ -56,6 +56,8 @@ web/
 # Deployment artifacts
 backend/Dockerfile.langgraph
 config.yaml.bak
-
 # asuka.sh service manager
 .asuka_pids/
+.playwright-mcp
+.gstack/
+.worktrees
